@@ -39,6 +39,9 @@ public:
 	int invalid(unsigned int index);
 	int replaceLRU(unsigned int index, unsigned int tag1);
 	void replaceLFU(unsigned int index, unsigned int tag1);
+	void replace();
+	void read(unsigned int add);
+	void write(unsigned int add);
 
 };
 

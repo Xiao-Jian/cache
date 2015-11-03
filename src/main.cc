@@ -27,77 +27,25 @@ int main(int argc, char *argv[]) {
     freopen(file,"r",stdin);
     printHead();
     
-    while( scanf( "%c %p", &ch, &add )!=EOF ) {
+    while( scanf( "%c %x", &ch, &add )!=EOF ) {
     	getchar();
-        unsigned int tmp = add;
+        /*unsigned int tmp = add;
         unsigned int block_offset = tmp % L1.blocksize;
         tmp >>= L1.block_offset_bits;
         unsigned int index = tmp % L1.set;
         tmp >>= L1.index_bits;
-        unsigned int tag1 = tmp;
+        unsigned int tag1 = tmp;*/
+        unsigned int block_offset = add & (L1.blocksize-1);
+        unsigned int index = (add>>L1.block_offset_bits) & (L1.set-1);
+        unsigned int tag1 = (add>>(L1.block_offset_bits+L1.index_bits));
+        //printf("%d %d %d\n", block_offset, index, tag1);
 
-        if(ch == 'r') {//read
-            L1.a ++;
-            if(L1.hit(add)==-1) {//miss
-                L1.b ++;
-                int i = L1.invalid(index);
-                if(i>-1) {//If have a invalid block
-                    if(L1.replacement_policy) {//LFU
-                        //L1.replaceLFU(index, tag1);
-                    }
-                    else {//LRU
-                        L1.flagV[index][i] = 1;
-                        L1.tag[index][i] = tag1;
-                        for(int j = 0; j < L1.assoc; j ++) {
-                            if(L1.counter[index][j] < L1.counter[index][i])
-                                L1.counter[index][j] ++;
-                        }
-                        L1.counter[index][i] = 0;
-                        /*if(!L1.write_policy) {
-                            if(L1.flagD[index][i]) {
-                                L1.f ++;
-                                L1.flagD[index][i] = 0;
-                            }
-                        }*/
-                    }
-                }
-                else {//replace_policy
-                    if(L1.replacement_policy) {//LFU
-                        //L1.replaceLFU(index, tag1);
-                    }
-                    else {//LRU
-                        int LRU = L1.replaceLRU(index, tag1);
-                        if(!L1.write_policy) {
-                            if(L1.flagD[index][LRU]) {
-                                L1.f ++;
-                                L1.flagD[index][LRU] = 0;
-                            }
-                        }
-                    }
-                }
-            }
-            else {//hit
-                if(L1.replacement_policy) {//LFU
-                    
-                }
-                else {//LRU
-                    /*int i = L1.hit(add);
-                    for(int j = 0; j < L1.assoc; j ++) {
-                        if(L1.counter[index][j] < L1.counter[index][i])
-                            L1.counter[index][j] ++;
-                    }
-                    L1.counter[index][i] = 0;*/
-                    /*if(!L1.write_policy) {
-                        if(L1.flagD[index][i]) {
-                            L1.f ++;
-                            L1.flagD[index][i] = 0;
-                        }
-                    }*/
-                }
-            }
+        if(ch == 'r') {//
+            L1.read(add);
         }
-        else {//write
-            L1.c ++;
+        else {//
+            L1.write(add);
+            /*L1.c ++;
             if(L1.hit(add)==-1) {//miss
                 L1.d ++;
                 int i = L1.invalid(index);
@@ -110,8 +58,8 @@ int main(int argc, char *argv[]) {
                             //L1.replaceLFU(index, tag1);
                         }
                         else {//LRU
-                            /*if(L1.flagD[index][i])
-                                L1.f ++;*/
+                            //if(L1.flagD[index][i])
+                                //L1.f ++;
                             L1.flagV[index][i] = 1;
                             L1.flagD[index][i] = 1;
                             L1.tag[index][i] = tag1;
@@ -151,7 +99,7 @@ int main(int argc, char *argv[]) {
                     }
                     L1.counter[index][i] = 0;
                 }
-            }
+            }*/
         }
 
 	}

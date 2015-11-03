@@ -29,8 +29,6 @@ void cache::setData(int _a,int _b,int _c,int _d,int _f) {
 
 int cache::hit(unsigned int add) {
 	unsigned int tmp = add;
-    int flag = 1;
-    unsigned int block_offset = tmp % blocksize;
     tmp >>= block_offset_bits;
   	unsigned int index = tmp % set;
     tmp >>= index_bits;
@@ -73,3 +71,115 @@ int cache::replaceLRU(unsigned int index, unsigned int tag1) {
 
 
 }*/
+
+void cache::replace() {
+
+}
+
+void cache::read(unsigned int add) {
+	unsigned int block_offset = add & (blocksize-1);
+    unsigned int index = (add>>block_offset_bits) & (set-1);
+    unsigned int tag1 = (add>>(block_offset_bits+index_bits));
+	a ++;
+    if(hit(add)==-1) {//miss
+        b ++;
+        int i = invalid(index);
+        if(i>-1) {//If have a invalid block
+            if(replacement_policy) {//LFU
+                //L1.replaceLFU(index, tag1);
+            }
+            else {//LRU
+                flagV[index][i] = 1;
+                tag[index][i] = tag1;
+                for(int j = 0; j < assoc; j ++) {
+                    if(counter[index][j] < counter[index][i])
+                        counter[index][j] ++;
+                }
+                counter[index][i] = 0;
+            }
+        }
+        else {//replace_policy
+            if(replacement_policy) {//LFU
+                //L1.replaceLFU(index, tag1);
+            }
+            else {//LRU
+                int LRU = replaceLRU(index, tag1);
+                if(!write_policy) {
+                	if(flagD[index][LRU]) {
+                    	f ++;
+                    	flagD[index][LRU] = 0;
+      	        	}
+                }
+            }
+        }
+    }
+    else {//hit
+        if(replacement_policy) {//LFU
+                    
+        }
+        else {
+                    
+        }
+    }
+}
+
+void cache::write(unsigned int add) {
+	unsigned int block_offset = add & (blocksize-1);
+    unsigned int index = (add>>block_offset_bits) & (set-1);
+    unsigned int tag1 = (add>>(block_offset_bits+index_bits));
+	c ++;
+    if(hit(add)==-1) {//miss
+        d ++;
+        int i = invalid(index);
+        if(write_policy) {//WTNA
+            //Nothing
+        }
+        else {//WBWA
+            if(i > -1) {//If have a invalid block
+                if(replacement_policy) {//LFU
+                    //replaceLFU(index, tag1);
+                }
+                else {//LRU
+                    /*if(flagD[index][i])
+                        f ++;*/
+                    flagV[index][i] = 1;
+                    flagD[index][i] = 1;
+                    tag[index][i] = tag1;
+                    for(int j = 0; j < assoc; j ++) {
+                        if(counter[index][j] < counter[index][i])
+                            counter[index][j] ++;
+                    }
+                 	counter[index][i] = 0;
+                }
+            }
+            else {
+                if(replacement_policy) {//LFU
+                    //replaceLFU(index, tag1);
+                }
+                else {//LRU
+                    int LRU = replaceLRU(index, tag1);
+                    if(flagD[index][LRU])
+                        f ++;
+                    flagD[index][LRU] = 1;
+                }
+            }
+        }
+    }
+    else {//hit
+        int i = hit(add);
+        if(write_policy) {//WTNA
+            //
+        }
+        else {//WBWA
+            //if(flagD[index][i])
+            //    f ++;
+            flagD[index][i] = 1;
+            tag[index][i] = tag1;
+            for(int j = 0; j < assoc; j ++) {
+                if(counter[index][j] < counter[index][i])
+                    counter[index][j] ++;
+            }
+            counter[index][i] = 0;
+        }
+    }
+}
