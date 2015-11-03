@@ -29,18 +29,11 @@ int main(int argc, char *argv[]) {
     
     while( scanf( "%c %x", &ch, &add )!=EOF ) {
     	getchar();
-        /*unsigned int tmp = add;
-        unsigned int block_offset = tmp % L1.blocksize;
-        tmp >>= L1.block_offset_bits;
-        unsigned int index = tmp % L1.set;
-        tmp >>= L1.index_bits;
-        unsigned int tag1 = tmp;*/
-        //printf("%d %d %d\n", block_offset, index, tag1);
 
-        if(ch == 'r') {//
+        if(ch == 'r') {//read
             L1.read(add);
         }
-        else {//
+        else {//write
             L1.write(add);
         }
 
