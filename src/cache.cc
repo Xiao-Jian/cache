@@ -21,10 +21,15 @@ void cache::setData(int _a,int _b,int _c,int _d,int _f) {
     index_bits = log(set) / log(2);
     block_offset_bits = log(blocksize) / log(2);
     tag_bits = 32 - index_bits - block_offset_bits;
-
-    for(int i = 0; i < MAX_S; i ++)
-    	for(int j = 0; j < MAX_A; j ++ )
-    		counter[i][j] = j;
+    if(!replacement_policy) {//init count LRU
+        for(int i = 0; i < MAX_S; i ++)
+        	for(int j = 0; j < MAX_A; j ++ )
+        		counter[i][j] = j;
+    }
+    else {//init count LFU
+        memset(counter, 0, sizeof(counter));
+        memset(count_set, 0, sizeof(count_set));
+    }
 }
 
 int cache::hit(unsigned int add) {
@@ -64,13 +69,19 @@ int cache::replaceLRU(unsigned int index, unsigned int tag1) {
 	return pos;
 }
 
-/*void cache::replaceLFU(unsigned int index) {
-
-
-}*/
-
-void cache::replace() {
-
+int cache::replaceLFU(unsigned int index, unsigned int tag1) {
+    int m = INF, pos;
+    for(int i = 0; i < assoc; i ++)
+        if(m > counter[index][i]) {
+            m = counter[index][i];
+            pos = i;
+        }
+    tag[index][pos] = tag1;
+    flagV[index][pos] = 1;
+    //int tmp = count_set[index];
+    count_set[index] = counter[index][pos];
+    counter[index][pos] = count_set[index] + 1;
+    return pos;
 }
 
 void cache::read(unsigned int add) {
@@ -81,12 +92,12 @@ void cache::read(unsigned int add) {
         b ++;
         int i = invalid(index);
         if(i>-1) {//If have a invalid block
+            flagV[index][i] = 1;
+            tag[index][i] = tag1;
             if(replacement_policy) {//LFU
-                //L1.replaceLFU(index, tag1);
+                counter[index][i] = count_set[index] + 1;
             }
             else {//LRU
-                flagV[index][i] = 1;
-                tag[index][i] = tag1;
                 for(int j = 0; j < assoc; j ++) {
                     if(counter[index][j] < counter[index][i])
                         counter[index][j] ++;
@@ -95,26 +106,31 @@ void cache::read(unsigned int add) {
             }
         }
         else {//replace_policy
-            if(replacement_policy) {//LFU
-                //L1.replaceLFU(index, tag1);
-            }
-            else {//LRU
-                int LRU = replaceLRU(index, tag1);
-                if(!write_policy) {
-                	if(flagD[index][LRU]) {
-                    	f ++;
-                    	flagD[index][LRU] = 0;
-      	        	}
+            int tmpos;
+            if(replacement_policy) //LFU
+                tmpos = replaceLFU(index, tag1);
+            else //LRU
+                tmpos = replaceLRU(index, tag1);
+    
+            if(!write_policy) {
+                if(flagD[index][tmpos]) {
+                    f ++;
+                    flagD[index][tmpos] = 0;
                 }
             }
         }
     }
     else {//hit
+        int hitpos = hit(add);
         if(replacement_policy) {//LFU
-                    
+            counter[index][hitpos] ++;
         }
-        else {
-                    
+        else {//LRU
+            for(int j = 0; j < assoc; j ++) {
+                if(counter[index][j] < counter[index][hitpos])
+                    counter[index][j] ++;
+            }
+            counter[index][hitpos] = 0;
         }
     }
 }
@@ -131,15 +147,13 @@ void cache::write(unsigned int add) {
         }
         else {//WBWA
             if(i > -1) {//If have a invalid block
+                flagV[index][i] = 1;
+                flagD[index][i] = 1;
+                tag[index][i] = tag1;
                 if(replacement_policy) {//LFU
-                    //replaceLFU(index, tag1);
+                    counter[index][i] = count_set[index] + 1;
                 }
                 else {//LRU
-                    /*if(flagD[index][i])
-                        f ++;*/
-                    flagV[index][i] = 1;
-                    flagD[index][i] = 1;
-                    tag[index][i] = tag1;
                     for(int j = 0; j < assoc; j ++) {
                         if(counter[index][j] < counter[index][i])
                             counter[index][j] ++;
@@ -148,33 +162,48 @@ void cache::write(unsigned int add) {
                 }
             }
             else {
-                if(replacement_policy) {//LFU
-                    //replaceLFU(index, tag1);
-                }
-                else {//LRU
-                    int LRU = replaceLRU(index, tag1);
-                    if(flagD[index][LRU])
-                        f ++;
-                    flagD[index][LRU] = 1;
-                }
+                int tmpos;
+                if(replacement_policy) //LFU
+                    tmpos = replaceLFU(index, tag1);
+                else //LRU
+                    tmpos = replaceLRU(index, tag1);
+                if(flagD[index][tmpos])
+                    f ++;
+                flagD[index][tmpos] = 1;
             }
         }
     }
     else {//hit
         int i = hit(add);
-        if(write_policy) {//WTNA
-            //
-        }
-        else {//WBWA
-            //if(flagD[index][i])
-            //    f ++;
-            flagD[index][i] = 1;
-            tag[index][i] = tag1;
-            for(int j = 0; j < assoc; j ++) {
-                if(counter[index][j] < counter[index][i])
-                    counter[index][j] ++;
+        if(replacement_policy) {//LFU
+            if(write_policy) {//WTNA
+                tag[index][i] = tag1;
+                counter[index][i] ++;
             }
-            counter[index][i] = 0;
+            else {//WBWA
+                flagD[index][i] = 1;
+                tag[index][i] = tag1;
+                counter[index][i] ++;
+            }
+        }
+        else {//LRU
+            if(write_policy) {//WTNA
+                tag[index][i] = tag1;
+                for(int j = 0; j < assoc; j ++) {
+                    if(counter[index][j] < counter[index][i])
+                        counter[index][j] ++;
+                }
+                counter[index][i] = 0;
+            }
+            else {//WBWA
+                flagD[index][i] = 1;
+                tag[index][i] = tag1;
+                for(int j = 0; j < assoc; j ++) {
+                    if(counter[index][j] < counter[index][i])
+                        counter[index][j] ++;
+                }
+                counter[index][i] = 0;
+            }
         }
     }
 }

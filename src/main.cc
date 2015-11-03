@@ -17,7 +17,6 @@ void init(int argc, char *argv[]);
 void printHead();
 void printTail();
 
-
 int main(int argc, char *argv[]) {
     if( argc < 7 ) {
     	printf( "You should enter enough(7) parameters\n" );
@@ -97,7 +96,7 @@ void printTail() {
     for(int i = 0; i < L1.set; i ++) {
         printf("set%4d:", i);
         for(int j = 0; j < L1.assoc; j ++) {
-            printf("  %x  ", L1.tag[i][j]);
+            printf("%8x ", L1.tag[i][j]);
             if(!L1.write_policy) {
                 if(L1.flagD[i][j])
                     printf("D");
@@ -109,10 +108,9 @@ void printTail() {
     }
 
     L1.e = (L1.b*1.0 + L1.d*1.0) / (L1.a*1.0 + L1.c*1.0);
-    if(L1.write_policy) {//WTNA
-    
-    }
-    else//WBWA
+    if(L1.write_policy) //WTNA
+        L1.g = L1.b + L1.c;
+    else //WBWA
         L1.g = L1.b + L1.d + L1.f;
 
     double ht = 0.25 + 2.5*(L1.size/512)/1024 + 0.025*(L1.blocksize/16) + 0.025*L1.assoc;

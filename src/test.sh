@@ -1,3 +1,5 @@
-make
-./sim_cache 16 16384 1 0 0 gcc_trace > output.txt
-diff -iw output.txt ValidationRun1.txt > debug
+./test1.sh
+./test2.sh
+./test3.sh
+./test4.sh
+./test5.sh

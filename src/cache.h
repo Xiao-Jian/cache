@@ -3,6 +3,7 @@
 
 #define MAX_S 2223
 #define MAX_A 101
+#define INF 99999999
 
 class cache {
 
@@ -23,6 +24,7 @@ public:
 	bool flagD[MAX_S][MAX_A];
 	bool flagV[MAX_S][MAX_A];
 	int counter[MAX_S][MAX_A];
+	int count_set[MAX_S];
 	int a,b,c,d,f,g;
 	double e, aat;
 
@@ -38,8 +40,7 @@ public:
 	int hit(unsigned int add);
 	int invalid(unsigned int index);
 	int replaceLRU(unsigned int index, unsigned int tag1);
-	void replaceLFU(unsigned int index, unsigned int tag1);
-	void replace();
+	int replaceLFU(unsigned int index, unsigned int tag1);
 	void read(unsigned int add);
 	void write(unsigned int add);
 
