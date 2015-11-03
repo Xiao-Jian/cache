@@ -28,11 +28,8 @@ void cache::setData(int _a,int _b,int _c,int _d,int _f) {
 }
 
 int cache::hit(unsigned int add) {
-	unsigned int tmp = add;
-    tmp >>= block_offset_bits;
-  	unsigned int index = tmp % set;
-    tmp >>= index_bits;
-    unsigned int tag1 = tmp;
+    unsigned int index = (add>>block_offset_bits) & (set-1);
+    unsigned int tag1 = (add>>(block_offset_bits+index_bits));
 
     for(int i = 0; i < assoc; i ++) {
     	if(tag1 == tag[index][i] && flagV[index][i])
@@ -77,7 +74,6 @@ void cache::replace() {
 }
 
 void cache::read(unsigned int add) {
-	unsigned int block_offset = add & (blocksize-1);
     unsigned int index = (add>>block_offset_bits) & (set-1);
     unsigned int tag1 = (add>>(block_offset_bits+index_bits));
 	a ++;
@@ -124,7 +120,6 @@ void cache::read(unsigned int add) {
 }
 
 void cache::write(unsigned int add) {
-	unsigned int block_offset = add & (blocksize-1);
     unsigned int index = (add>>block_offset_bits) & (set-1);
     unsigned int tag1 = (add>>(block_offset_bits+index_bits));
 	c ++;
